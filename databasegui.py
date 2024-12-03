@@ -133,13 +133,123 @@ class CheckoutPage(ctk.CTkToplevel):
         # (Implementation for checkout similar to your original code)
         pass
 
-# Add Borrower Page (Similar to Search and Checkout)
+# Add Borrower Page
 class AddBorrowerPage(ctk.CTkToplevel):
-    pass
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.geometry("600x400")
+        self.configure(fg_color="#66d9e8")
+        self.title("Add Borrower")
 
-# Add Book Page (Similar to Search and Checkout)
+        ctk.CTkLabel(self, text="Add Borrower", font=("Courier", 20, "bold")).pack(pady=20)
+
+        ctk.CTkLabel(self, text="Name").pack(pady=5)
+        self.name_entry = ctk.CTkEntry(self, width=300)
+        self.name_entry.pack()
+
+        ctk.CTkLabel(self, text="Address").pack(pady=5)
+        self.address_entry = ctk.CTkEntry(self, width=300)
+        self.address_entry.pack()
+
+        ctk.CTkLabel(self, text="Phone").pack(pady=5)
+        self.phone_entry = ctk.CTkEntry(self, width=300)
+        self.phone_entry.pack()
+
+        ctk.CTkButton(self, text="Add Borrower", command=self.add_borrower).pack(pady=10)
+        ctk.CTkButton(self, text="Back to Main Menu", command=self.destroy).pack(pady=10)
+
+    def add_borrower(self):
+        name = self.name_entry.get()
+        address = self.address_entry.get()
+        phone = self.phone_entry.get()
+
+        try:
+            conn = connect_to_db()
+            cursor = conn.cursor()
+
+            # Insert into BORROWER
+            cursor.execute("""
+                INSERT INTO BORROWER (Name, Address, Phone)
+                VALUES (%s, %s, %s);
+            """, (name, address, phone))
+            conn.commit()
+
+            # Fetch the last inserted Card_No
+            cursor.execute("SELECT LAST_INSERT_ID();")
+            card_no = cursor.fetchone()[0]
+            messagebox.showinfo("Success", f"Borrower added successfully! New Card No: {card_no}")
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+        finally:
+            cursor.close()
+            conn.close()
+
+
+# Add Book Page
 class AddBookPage(ctk.CTkToplevel):
-    pass
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.geometry("600x400")
+        self.configure(fg_color="#66d9e8")
+        self.title("Add Book")
+
+        ctk.CTkLabel(self, text="Add Book", font=("Courier", 20, "bold")).pack(pady=20)
+
+        ctk.CTkLabel(self, text="Title").pack(pady=5)
+        self.title_entry = ctk.CTkEntry(self, width=300)
+        self.title_entry.pack()
+
+        ctk.CTkLabel(self, text="Publisher Name").pack(pady=5)
+        self.publisher_entry = ctk.CTkEntry(self, width=300)
+        self.publisher_entry.pack()
+
+        ctk.CTkLabel(self, text="Author Name").pack(pady=5)
+        self.author_entry = ctk.CTkEntry(self, width=300)
+        self.author_entry.pack()
+
+        ctk.CTkButton(self, text="Add Book", command=self.add_book).pack(pady=10)
+        ctk.CTkButton(self, text="Back to Main Menu", command=self.destroy).pack(pady=10)
+
+    def add_book(self):
+        title = self.title_entry.get()
+        publisher = self.publisher_entry.get()
+        author = self.author_entry.get()
+
+        try:
+            conn = connect_to_db()
+            cursor = conn.cursor()
+
+            # Insert into BOOK
+            cursor.execute("""
+                INSERT INTO BOOK (Title, Publisher_Name)
+                VALUES (%s, %s);
+            """, (title, publisher))
+
+            # Get the last inserted Book_Id
+            cursor.execute("SELECT LAST_INSERT_ID();")
+            book_id = cursor.fetchone()[0]
+
+            # Insert into BOOK_AUTHORS
+            cursor.execute("""
+                INSERT INTO BOOK_AUTHORS (Book_Id, Author_Name)
+                VALUES (%s, %s);
+            """, (book_id, author))
+
+            # Add 5 copies to all branches
+            cursor.execute("SELECT Branch_Id FROM LIBRARY_BRANCH;")
+            branches = cursor.fetchall()
+            for branch in branches:
+                cursor.execute("""
+                    INSERT INTO BOOK_COPIES (Book_Id, Branch_Id, No_Of_Copies)
+                    VALUES (%s, %s, 5);
+                """, (book_id, branch[0]))
+            conn.commit()
+            messagebox.showinfo("Success", f"Book '{title}' added successfully with 5 copies in all branches.")
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+        finally:
+            cursor.close()
+            conn.close()
 
 # Run the Application
 if __name__ == "__main__":
