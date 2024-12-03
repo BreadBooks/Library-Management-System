@@ -26,6 +26,7 @@ def display_results(results, column_names, title="Results"):
 
     for row in results:
         tree.insert('', "end", values=row)
+        
 
 # Main Application Class
 class LibraryApp(ctk.CTk):
@@ -48,10 +49,10 @@ class LibraryApp(ctk.CTk):
          # Buttons for Navigation
         button_font = ("Courier", 20, "bold")  # Bold Font for Buttons
 
-        ctk.CTkButton(self, text="Search Books", command=self.open_search_page, font=button_font, width=200, height=50).pack(pady=10)
-        ctk.CTkButton(self, text="Checkout Book", command=self.open_checkout_page, font=button_font, width=200, height=50).pack(pady=10)
-        ctk.CTkButton(self, text="Add Borrower", command=self.open_add_borrower_page, font=button_font, width=200, height=50).pack(pady=10)
-        ctk.CTkButton(self, text="Add Book", command=self.open_add_book_page, font=button_font, width=200, height=50).pack(pady=10)
+        ctk.CTkButton(self, text="Search Books", fg_color="#635555", hover_color="#2e2626", command=self.open_search_page, font=button_font, width=200, height=50).pack(pady=10)
+        ctk.CTkButton(self, text="Checkout Book", fg_color="#635555", hover_color="#2e2626", command=self.open_checkout_page, font=button_font, width=200, height=50).pack(pady=10)
+        ctk.CTkButton(self, text="Add Borrower", fg_color="#635555", hover_color="#2e2626", command=self.open_add_borrower_page, font=button_font, width=200, height=50).pack(pady=10)
+        ctk.CTkButton(self, text="Add Book", fg_color="#635555",hover_color="#2e2626", command=self.open_add_book_page, font=button_font, width=200, height=50).pack(pady=10)
 
     def open_search_page(self):
         SearchPage(self)
