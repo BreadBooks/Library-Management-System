@@ -34,7 +34,7 @@ class LibraryApp(ctk.CTk):
         super().__init__()
         self.title("Library Management System")
         self.geometry("800x600")
-        self.configure(fg_color="#66d9e8")  # Set background to turquoise blue
+        self.configure(fg_color="#bad7f5")  # Set background to turquoise blue
 
         # Logo Image
         self.logo_image = Image.open("book.png")  # Load the logo image
@@ -71,7 +71,7 @@ class SearchPage(ctk.CTkToplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.geometry("600x400")
-        self.configure(fg_color="#66d9e8")
+        self.configure(fg_color="#bad7f5")
         self.title("Search Books")
 
         ctk.CTkLabel(self, text="Search Books", font=("Courier", 20, "bold")).pack(pady=20)
@@ -112,7 +112,7 @@ class CheckoutPage(ctk.CTkToplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.geometry("600x400")
-        self.configure(fg_color="#66d9e8")
+        self.configure(fg_color="#bad7f5")
         self.title("Checkout Book")
 
         ctk.CTkLabel(self, text="Checkout Book", font=("Courier", 20, "bold")).pack(pady=20)
@@ -139,7 +139,7 @@ class AddBorrowerPage(ctk.CTkToplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.geometry("600x400")
-        self.configure(fg_color="#66d9e8")
+        self.configure(fg_color="#bad7f5")
         self.title("Add Borrower")
 
         ctk.CTkLabel(self, text="Add Borrower", font=("Courier", 20, "bold")).pack(pady=20)
@@ -191,7 +191,7 @@ class AddBookPage(ctk.CTkToplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.geometry("600x400")
-        self.configure(fg_color="#66d9e8")
+        self.configure(fg_color="#bad7f5")
         self.title("Add Book")
 
         ctk.CTkLabel(self, text="Add Book", font=("Courier", 20, "bold")).pack(pady=20)
