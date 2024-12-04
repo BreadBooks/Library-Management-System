@@ -32,7 +32,7 @@ class LibraryApp(ctk.CTk):
         self.frames = {}
 
         # Initialize all pages
-        for Page in (MainMenu, SearchPage, CheckoutPage, AddBorrowerPage, AddBookPage):
+        for Page in (MainMenu, SearchPage, CheckoutPage, AddBorrowerPage, AddBookPage, LateNoticesPage):
             page_name = Page.__name__
             frame = Page(parent=self.container, controller=self)
             self.frames[page_name] = frame
@@ -82,6 +82,9 @@ class MainMenu(ctk.CTkFrame):
                       command=lambda: controller.show_frame("AddBorrowerPage"), font=button_font, width=200, height=50).pack(pady=10)
         ctk.CTkButton(button_frame, text="Add Book", fg_color="#635555", hover_color="#2e2626",
                       command=lambda: controller.show_frame("AddBookPage"), font=button_font, width=200, height=50).pack(pady=10)
+        ctk.CTkButton(button_frame, text="Late Notices", fg_color="#635555", hover_color="#2e2626",
+              command=lambda: controller.show_frame("LateNoticesPage"), font=button_font, width=200, height=50).pack(pady=10)
+
         
 # Helper Functions for Styling
 def styled_entry(parent, width=400):
@@ -443,6 +446,106 @@ class AddBookPage(ctk.CTkFrame):
         finally:
             cursor.close()
             conn.close()
+
+class LateNoticesPage(ctk.CTkFrame):
+    def __init__(self, parent, controller):
+        super().__init__(parent)
+        self.controller = controller
+        self.configure(fg_color="#bad7f5")
+
+        # Header
+        ctk.CTkLabel(self, text="Late Notices", font=("Courier", 24, "bold")).pack(pady=20)
+        ctk.CTkLabel(self, text="Enter Due Date Range", font=("Courier", 16)).pack(pady=10)
+
+        # Input Fields for Date Range
+        ctk.CTkLabel(self, text="Start Date (YYYY-MM-DD)", font=("Courier", 14)).pack(pady=5)
+        self.start_date_entry = styled_entry(self)
+        self.start_date_entry.pack(pady=5)
+
+        ctk.CTkLabel(self, text="End Date (YYYY-MM-DD)", font=("Courier", 14)).pack(pady=5)
+        self.end_date_entry = styled_entry(self)
+        self.end_date_entry.pack(pady=5)
+
+        # Buttons
+        styled_button(self, "Search", self.search_late_notices).pack(pady=10)
+        styled_button(self, "Back to Main Menu", lambda: controller.show_frame("MainMenu")).pack(pady=10)
+
+    def search_late_notices(self):
+        start_date = self.start_date_entry.get().strip()
+        end_date = self.end_date_entry.get().strip()
+
+        # Validate dates
+        if not start_date or not end_date:
+            messagebox.showerror("Error", "Both start and end dates are required!")
+            return
+
+        try:
+            conn = connect_to_db()
+            cursor = conn.cursor()
+
+            # SQL query to fetch late notices
+            cursor.execute("""
+                SELECT 
+                    Book_Id AS 'Book ID', 
+                    Branch_Id AS 'Branch ID', 
+                    Card_No AS 'Card Number', 
+                    Due_Date AS 'Due Date', 
+                    Returned_date AS 'Return Date',
+                    DATEDIFF(Returned_date, Due_Date) AS 'Days Late'
+                FROM BOOK_LOANS
+                WHERE Returned_date > Due_Date
+                AND Due_Date BETWEEN %s AND %s;
+            """, (start_date, end_date))
+
+            # Fetch results
+            results = cursor.fetchall()
+
+            if results:
+                column_names = [desc[0] for desc in cursor.description]
+                self.display_results(results, column_names)
+            else:
+                messagebox.showinfo("No Results", "No late notices found for the given date range.")
+        except mysql.connector.Error as e:
+            messagebox.showerror("Database Error", f"An error occurred: {e}")
+        finally:
+            cursor.close()
+            conn.close()
+
+    def display_results(self, results, column_names):
+        result_window = ctk.CTkToplevel(self)
+        result_window.title("Late Notices")
+        result_window.geometry("800x400")
+
+        # Create a frame for the Treeview and scrollbar
+        frame = ctk.CTkFrame(result_window, fg_color="#bad7f5")
+        frame.grid(row=0, column=0, sticky="nsew")
+
+        # Configure grid
+        frame.grid_rowconfigure(0, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
+
+        # Create Treeview
+        tree = ttk.Treeview(frame, columns=column_names, show='headings', height=15)
+        tree.grid(row=0, column=0, sticky="nsew")
+
+        # Add scrollbar
+        scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
+        scrollbar.grid(row=0, column=1, sticky="ns")
+        tree.configure(yscrollcommand=scrollbar.set)
+
+        # Set column headers
+        for col in column_names:
+            tree.heading(col, text=col)
+            tree.column(col, width=150)
+
+        # Populate Treeview
+        for row in results:
+            tree.insert("", "end", values=row)
+
+        # Adjust result window size
+        result_window.grid_rowconfigure(0, weight=1)
+        result_window.grid_columnconfigure(0, weight=1)
+
 
 # Run the Application
 if __name__ == "__main__":
