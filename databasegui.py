@@ -134,35 +134,72 @@ class SearchPage(ctk.CTkFrame):
             conn = connect_to_db()
             cursor = conn.cursor()
 
+            # SQL query to count the number of loans per branch based on search criteria
             cursor.execute("""
-                SELECT b.Book_Id, b.Title, ba.Author_Name, b.Publisher_Name
+                SELECT 
+                    b.Title AS 'Book Title', 
+                    ba.Author_Name AS 'Author Name',
+                    b.Publisher_Name AS 'Publisher Name',
+                    bl.Branch_Id AS 'Branch ID',
+                    COUNT(bl.Book_Id) AS 'Copies Loaned'
                 FROM BOOK b
                 JOIN BOOK_AUTHORS ba ON b.Book_Id = ba.Book_Id
-                WHERE b.Title LIKE %s OR ba.Author_Name LIKE %s;
-            """, (f"%{search_criteria}%", f"%{search_criteria}%"))
+                JOIN BOOK_LOANS bl ON b.Book_Id = bl.Book_Id
+                WHERE b.Title LIKE %s OR ba.Author_Name LIKE %s OR b.Publisher_Name LIKE %s
+                GROUP BY bl.Branch_Id, b.Book_Id, b.Title, ba.Author_Name, b.Publisher_Name
+                ORDER BY bl.Branch_Id;
+            """, (f"%{search_criteria}%", f"%{search_criteria}%", f"%{search_criteria}%"))
+            
+            # Fetch results
             results = cursor.fetchall()
 
             if results:
                 column_names = [desc[0] for desc in cursor.description]
                 self.display_results(results, column_names)
             else:
-                messagebox.showinfo("No Results", "No books found matching your search criteria.")
+                messagebox.showinfo("No Results", "No loan data found matching your search criteria.")
         except Exception as e:
             messagebox.showerror("Error", str(e))
         finally:
             cursor.close()
             conn.close()
 
+
     def display_results(self, results, column_names):
-        result_window = ctk.CTkFrame(self, fg_color="#bad7f5")
-        result_window.pack(fill="both", expand=True)
-        tree = ctk.CTkTreeview(result_window, columns=column_names, show='headings')
+        result_window = ctk.CTkToplevel(self)
+        result_window.title("Search Results")
+        result_window.geometry("800x400")
+
+        # Create a frame for the Treeview and scrollbar
+        frame = ctk.CTkFrame(result_window, fg_color="#bad7f5")
+        frame.grid(row=0, column=0, sticky="nsew")
+
+        # Configure grid
+        frame.grid_rowconfigure(0, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
+
+        # Create Treeview
+        tree = ttk.Treeview(frame, columns=column_names, show='headings', height=15)
+        tree.grid(row=0, column=0, sticky="nsew")
+
+        # Add scrollbar
+        scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
+        scrollbar.grid(row=0, column=1, sticky="ns")
+        tree.configure(yscrollcommand=scrollbar.set)
+
+        # Set column headers
         for col in column_names:
             tree.heading(col, text=col)
             tree.column(col, width=150)
-        tree.pack(fill="both", expand=True, padx=20, pady=20)
+
+        # Populate Treeview
         for row in results:
-            tree.insert('', "end", values=row)
+            tree.insert("", "end", values=row)
+
+        # Adjust result window size
+        result_window.grid_rowconfigure(0, weight=1)
+        result_window.grid_columnconfigure(0, weight=1)
+
 
 # Checkout Page
 class CheckoutPage(ctk.CTkFrame):
