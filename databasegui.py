@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from tkinter import messagebox
+from tkinter import ttk
 from PIL import Image
 import mysql.connector
 
@@ -199,7 +200,6 @@ class CheckoutPage(ctk.CTkFrame):
         styled_button(content_frame, "Back to Main Menu", lambda: controller.show_frame("MainMenu")).pack(pady=10)
 
     def checkout_book(self):
-        """Handles the book checkout process."""
         book_id = self.book_id_entry.get().strip()
         branch_id = self.branch_id_entry.get().strip()
         card_no = self.card_no_entry.get().strip()
@@ -219,16 +219,17 @@ class CheckoutPage(ctk.CTkFrame):
                 VALUES (%s, %s, %s, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 14 DAY));
             """, (book_id, branch_id, card_no))
 
-            # Fetch updated BOOK_COPIES
-            cursor.execute("SELECT * FROM BOOK_COPIES WHERE Book_Id = %s AND Branch_Id = %s;", (book_id, branch_id))
+            # Commit transaction to execute trigger
+            conn.commit()
+
+            # Fetch all updated BOOK_COPIES
+            cursor.execute("SELECT * FROM BOOK_COPIES;")
             results = cursor.fetchall()
 
             if not results:
-                messagebox.showerror("Error", "Book or branch not found, or no copies available!")
-                conn.rollback()
+                messagebox.showerror("Error", "No book copies found!")
                 return
 
-            conn.commit()
             column_names = [desc[0] for desc in cursor.description]
             self.display_results(results, column_names)
             messagebox.showinfo("Success", "Book checked out successfully!")
@@ -238,16 +239,22 @@ class CheckoutPage(ctk.CTkFrame):
             cursor.close()
             conn.close()
 
+
+
     def display_results(self, results, column_names):
         """Displays updated book copies in a new window."""
         result_window = ctk.CTkToplevel(self)
         result_window.title("Updated Book Copies")
         result_window.geometry("600x400")
-        tree = ctk.CTkTreeview(result_window, columns=column_names, show='headings')
+
+        # Create Treeview
+        tree = ttk.Treeview(result_window, columns=column_names, show='headings')
         for col in column_names:
             tree.heading(col, text=col)
             tree.column(col, width=150)
         tree.pack(fill="both", expand=True, padx=20, pady=20)
+
+        # Insert results into Treeview
         for row in results:
             tree.insert('', "end", values=row)
 
