@@ -492,7 +492,8 @@ class LateNoticesPage(ctk.CTkFrame):
 
         result_window.grid_rowconfigure(0, weight=1)
         result_window.grid_columnconfigure(0, weight=1)
-
+        
+#Borrower Lookup Page 
 class BorrowerLookupPage(ctk.CTkFrame):
     def __init__(self, parent, controller):
         super().__init__(parent)
