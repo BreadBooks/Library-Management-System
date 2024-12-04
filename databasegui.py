@@ -18,20 +18,16 @@ class LibraryApp(ctk.CTk):
         super().__init__()
         self.title("Library Management System")
         self.geometry("800x600")
-        self.configure(fg_color="#bad7f5")  # Turquoise blue background
+        self.configure(fg_color="#bad7f5")  
 
-        # Define container for pages
         self.container = ctk.CTkFrame(self, fg_color="#bad7f5")
         self.container.pack(fill="both", expand=True)
 
-        # Properly configure grid in container
         self.container.grid_rowconfigure(0, weight=1)
         self.container.grid_columnconfigure(0, weight=1)
 
-        # Create a dictionary to store frames
         self.frames = {}
 
-        # Initialize all pages
         for Page in (MainMenu, SearchPage, CheckoutPage, AddBorrowerPage, AddBookPage, LateNoticesPage, BorrowerLookupPage):
             page_name = Page.__name__
             frame = Page(parent=self.container, controller=self)
@@ -41,7 +37,6 @@ class LibraryApp(ctk.CTk):
         self.show_frame("MainMenu")
 
     def show_frame(self, page_name):
-        """Show a frame for the given page name."""
         frame = self.frames[page_name]
         frame.tkraise()
 
@@ -53,23 +48,19 @@ class MainMenu(ctk.CTkFrame):
         self.controller = controller
         self.configure(fg_color="#bad7f5")
 
-        # Configure rows and columns for proper centering
         self.grid_rowconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
         self.grid_rowconfigure(2, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        # Logo Image
         logo_image = Image.open("book.png")
         logo = ctk.CTkImage(logo_image, size=(200, 200))
         logo_label = ctk.CTkLabel(self, text="", image=logo)
         logo_label.grid(row=0, column=0, pady=20)
 
-        # Title
         title_label = ctk.CTkLabel(self, text="Library Management System", font=("Courier", 28, "bold"))
         title_label.grid(row=1, column=0, pady=10)
 
-        # Buttons
         button_font = ("Courier", 22, "bold")
         button_frame = ctk.CTkFrame(self, fg_color="#bad7f5")  # Sub-frame for buttons
         button_frame.grid(row=2, column=0)
@@ -91,11 +82,9 @@ class MainMenu(ctk.CTkFrame):
         
 # Helper Functions for Styling
 def styled_entry(parent, width=400):
-    """Create a styled CTkEntry."""
     return ctk.CTkEntry(parent, width=width, font=("Courier", 16))
 
 def styled_button(parent, text, command):
-    """Create a styled CTkButton."""
     return ctk.CTkButton(
         parent,
         text=text,
@@ -114,23 +103,18 @@ class SearchPage(ctk.CTkFrame):
         self.controller = controller
         self.configure(fg_color="#bad7f5")
 
-        # Centering Content
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        # Content Frame
         content_frame = ctk.CTkFrame(self, fg_color="#bad7f5")
         content_frame.grid(row=0, column=0, sticky="nsew")
 
-        # Header
         ctk.CTkLabel(content_frame, text="Search Books", font=("Courier", 24, "bold")).pack(pady=20)
         ctk.CTkLabel(content_frame, text="Enter Title, Author, or Keyword", font=("Courier", 16)).pack(pady=10)
 
-        # Input Field
         self.search_criteria_entry = styled_entry(content_frame)
         self.search_criteria_entry.pack(pady=10)
 
-        # Buttons
         styled_button(content_frame, "Search", self.search_books).pack(pady=10)
         styled_button(content_frame, "Back to Main Menu", lambda: controller.show_frame("MainMenu")).pack(pady=10)
 
@@ -156,7 +140,6 @@ class SearchPage(ctk.CTkFrame):
                 ORDER BY bl.Branch_Id;
             """, (f"%{search_criteria}%", f"%{search_criteria}%", f"%{search_criteria}%"))
             
-            # Fetch results
             results = cursor.fetchall()
 
             if results:
@@ -176,33 +159,26 @@ class SearchPage(ctk.CTkFrame):
         result_window.title("Search Results")
         result_window.geometry("800x400")
 
-        # Create a frame for the Treeview and scrollbar
         frame = ctk.CTkFrame(result_window, fg_color="#bad7f5")
         frame.grid(row=0, column=0, sticky="nsew")
 
-        # Configure grid
         frame.grid_rowconfigure(0, weight=1)
         frame.grid_columnconfigure(0, weight=1)
 
-        # Create Treeview
         tree = ttk.Treeview(frame, columns=column_names, show='headings', height=15)
         tree.grid(row=0, column=0, sticky="nsew")
 
-        # Add scrollbar
         scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
         scrollbar.grid(row=0, column=1, sticky="ns")
         tree.configure(yscrollcommand=scrollbar.set)
 
-        # Set column headers
         for col in column_names:
             tree.heading(col, text=col)
             tree.column(col, width=150)
 
-        # Populate Treeview
         for row in results:
             tree.insert("", "end", values=row)
 
-        # Adjust result window size
         result_window.grid_rowconfigure(0, weight=1)
         result_window.grid_columnconfigure(0, weight=1)
 
@@ -214,18 +190,14 @@ class CheckoutPage(ctk.CTkFrame):
         self.controller = controller
         self.configure(fg_color="#bad7f5")
 
-        # Centering Content
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        # Content Frame
         content_frame = ctk.CTkFrame(self, fg_color="#bad7f5")
         content_frame.grid(row=0, column=0, sticky="nsew")
 
-        # Header
         ctk.CTkLabel(content_frame, text="Checkout Book", font=("Courier", 24, "bold")).pack(pady=20)
 
-        # Input Fields
         ctk.CTkLabel(content_frame, text="Book ID", font=("Courier", 16)).pack(pady=5)
         self.book_id_entry = styled_entry(content_frame)
         self.book_id_entry.pack(pady=5)
@@ -238,7 +210,6 @@ class CheckoutPage(ctk.CTkFrame):
         self.card_no_entry = styled_entry(content_frame)
         self.card_no_entry.pack(pady=5)
 
-        # Buttons
         styled_button(content_frame, "Checkout", self.checkout_book).pack(pady=10)
         styled_button(content_frame, "Back to Main Menu", lambda: controller.show_frame("MainMenu")).pack(pady=10)
 
@@ -247,7 +218,6 @@ class CheckoutPage(ctk.CTkFrame):
         branch_id = self.branch_id_entry.get().strip()
         card_no = self.card_no_entry.get().strip()
 
-        # Validation
         if not book_id or not branch_id or not card_no:
             messagebox.showerror("Error", "All fields are required!")
             return
@@ -265,7 +235,6 @@ class CheckoutPage(ctk.CTkFrame):
             # Commit transaction to execute trigger
             conn.commit()
 
-            # Fetch all updated BOOK_COPIES
             cursor.execute("SELECT * FROM BOOK_COPIES;")
             results = cursor.fetchall()
 
@@ -290,14 +259,12 @@ class CheckoutPage(ctk.CTkFrame):
         result_window.title("Updated Book Copies")
         result_window.geometry("600x400")
 
-        # Create Treeview
         tree = ttk.Treeview(result_window, columns=column_names, show='headings')
         for col in column_names:
             tree.heading(col, text=col)
             tree.column(col, width=150)
         tree.pack(fill="both", expand=True, padx=20, pady=20)
 
-        # Insert results into Treeview
         for row in results:
             tree.insert('', "end", values=row)
 
@@ -305,22 +272,18 @@ class CheckoutPage(ctk.CTkFrame):
 # Add Borrower Page
 class AddBorrowerPage(ctk.CTkFrame):
     def __init__(self, parent, controller):
-        super().__init__(parent)  # Initialize parent class
+        super().__init__(parent) 
         self.controller = controller
         self.configure(fg_color="#bad7f5")
 
-        # Centering Content
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        # Content Frame
         content_frame = ctk.CTkFrame(self, fg_color="#bad7f5")
         content_frame.grid(row=0, column=0, sticky="nsew")
 
-        # Header
         ctk.CTkLabel(content_frame, text="Add Borrower", font=("Courier", 24, "bold")).pack(pady=20)
 
-        # Input Fields
         ctk.CTkLabel(content_frame, text="Name", font=("Courier", 16)).pack(pady=5)
         self.name_entry = styled_entry(content_frame)
         self.name_entry.pack(pady=5)
@@ -333,7 +296,6 @@ class AddBorrowerPage(ctk.CTkFrame):
         self.phone_entry = styled_entry(content_frame)
         self.phone_entry.pack(pady=5)
 
-        # Buttons
         styled_button(content_frame, "Add Borrower", self.add_borrower).pack(pady=10)
         styled_button(content_frame, "Back to Main Menu", lambda: controller.show_frame("MainMenu")).pack(pady=10)
 
@@ -357,7 +319,6 @@ class AddBorrowerPage(ctk.CTkFrame):
             """, (name, address, phone))
             conn.commit()
 
-            # Fetch the last inserted Card_No
             cursor.execute("SELECT LAST_INSERT_ID();")
             card_no = cursor.fetchone()[0]
             messagebox.showinfo("Success", f"Borrower added successfully! New Card No: {card_no}")
@@ -370,22 +331,18 @@ class AddBorrowerPage(ctk.CTkFrame):
 # Add Book Page (Similar to Add Borrower Page)
 class AddBookPage(ctk.CTkFrame):
     def __init__(self, parent, controller):
-        super().__init__(parent)  # Initialize parent class
+        super().__init__(parent) 
         self.controller = controller
         self.configure(fg_color="#bad7f5")
 
-        # Centering Content
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        # Content Frame
         content_frame = ctk.CTkFrame(self, fg_color="#bad7f5")
         content_frame.grid(row=0, column=0, sticky="nsew")
 
-        # Header
         ctk.CTkLabel(content_frame, text="Add Book", font=("Courier", 24, "bold")).pack(pady=20)
 
-        # Input Fields
         ctk.CTkLabel(content_frame, text="Title", font=("Courier", 16)).pack(pady=5)
         self.title_entry = styled_entry(content_frame)
         self.title_entry.pack(pady=5)
@@ -398,7 +355,6 @@ class AddBookPage(ctk.CTkFrame):
         self.author_entry = styled_entry(content_frame)
         self.author_entry.pack(pady=5)
 
-        # Buttons
         styled_button(content_frame, "Add Book", self.add_book).pack(pady=10)
         styled_button(content_frame, "Back to Main Menu", lambda: controller.show_frame("MainMenu")).pack(pady=10)
 
@@ -408,7 +364,6 @@ class AddBookPage(ctk.CTkFrame):
         publisher = self.publisher_entry.get().strip()
         author = self.author_entry.get().strip()
 
-        # Validation
         if not title or not publisher or not author:
             messagebox.showerror("Error", "All fields are required!")
             return
@@ -449,18 +404,17 @@ class AddBookPage(ctk.CTkFrame):
         finally:
             cursor.close()
             conn.close()
-
+            
+# Late Notices Page
 class LateNoticesPage(ctk.CTkFrame):
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
         self.configure(fg_color="#bad7f5")
 
-        # Header
         ctk.CTkLabel(self, text="Late Notices", font=("Courier", 24, "bold")).pack(pady=20)
         ctk.CTkLabel(self, text="Enter Due Date Range", font=("Courier", 16)).pack(pady=10)
 
-        # Input Fields for Date Range
         ctk.CTkLabel(self, text="Start Date (YYYY-MM-DD)", font=("Courier", 14)).pack(pady=5)
         self.start_date_entry = styled_entry(self)
         self.start_date_entry.pack(pady=5)
@@ -469,7 +423,6 @@ class LateNoticesPage(ctk.CTkFrame):
         self.end_date_entry = styled_entry(self)
         self.end_date_entry.pack(pady=5)
 
-        # Buttons
         styled_button(self, "Search", self.search_late_notices).pack(pady=10)
         styled_button(self, "Back to Main Menu", lambda: controller.show_frame("MainMenu")).pack(pady=10)
 
@@ -477,7 +430,6 @@ class LateNoticesPage(ctk.CTkFrame):
         start_date = self.start_date_entry.get().strip()
         end_date = self.end_date_entry.get().strip()
 
-        # Validate dates
         if not start_date or not end_date:
             messagebox.showerror("Error", "Both start and end dates are required!")
             return
@@ -500,7 +452,6 @@ class LateNoticesPage(ctk.CTkFrame):
                 AND Due_Date BETWEEN %s AND %s;
             """, (start_date, end_date))
 
-            # Fetch results
             results = cursor.fetchall()
 
             if results:
@@ -519,33 +470,26 @@ class LateNoticesPage(ctk.CTkFrame):
         result_window.title("Late Notices")
         result_window.geometry("800x400")
 
-        # Create a frame for the Treeview and scrollbar
         frame = ctk.CTkFrame(result_window, fg_color="#bad7f5")
         frame.grid(row=0, column=0, sticky="nsew")
 
-        # Configure grid
         frame.grid_rowconfigure(0, weight=1)
         frame.grid_columnconfigure(0, weight=1)
 
-        # Create Treeview
         tree = ttk.Treeview(frame, columns=column_names, show='headings', height=15)
         tree.grid(row=0, column=0, sticky="nsew")
 
-        # Add scrollbar
         scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
         scrollbar.grid(row=0, column=1, sticky="ns")
         tree.configure(yscrollcommand=scrollbar.set)
 
-        # Set column headers
         for col in column_names:
             tree.heading(col, text=col)
             tree.column(col, width=150)
 
-        # Populate Treeview
         for row in results:
             tree.insert("", "end", values=row)
 
-        # Adjust result window size
         result_window.grid_rowconfigure(0, weight=1)
         result_window.grid_columnconfigure(0, weight=1)
 
@@ -555,11 +499,9 @@ class BorrowerLookupPage(ctk.CTkFrame):
         self.controller = controller
         self.configure(fg_color="#bad7f5")
 
-        # Header
         ctk.CTkLabel(self, text="Borrower Lookup", font=("Courier", 24, "bold")).pack(pady=20)
         ctk.CTkLabel(self, text="Search Borrowers and Book Info", font=("Courier", 16)).pack(pady=10)
 
-        # Borrower Filters
         ctk.CTkLabel(self, text="Borrower ID (optional)", font=("Courier", 14)).pack(pady=5)
         self.borrower_id_entry = styled_entry(self)
         self.borrower_id_entry.pack(pady=5)
@@ -568,7 +510,6 @@ class BorrowerLookupPage(ctk.CTkFrame):
         self.borrower_name_entry = styled_entry(self)
         self.borrower_name_entry.pack(pady=5)
 
-        # Book Filters
         ctk.CTkLabel(self, text="Book ID (optional)", font=("Courier", 14)).pack(pady=5)
         self.book_id_entry = styled_entry(self)
         self.book_id_entry.pack(pady=5)
@@ -577,7 +518,6 @@ class BorrowerLookupPage(ctk.CTkFrame):
         self.book_title_entry = styled_entry(self)
         self.book_title_entry.pack(pady=5)
 
-        # Buttons
         styled_button(self, "See Borrowers", self.search_borrowers).pack(pady=10)
         styled_button(self, "See Books", self.search_books).pack(pady=10)
         styled_button(self, "Back to Main Menu", lambda: controller.show_frame("MainMenu")).pack(pady=10)
@@ -609,7 +549,6 @@ class BorrowerLookupPage(ctk.CTkFrame):
                     `Late Fee Balance ($)` DESC;
             """, (borrower_id, borrower_id, borrower_name, f"%{borrower_name}%"))
 
-            # Fetch results
             results = cursor.fetchall()
             column_names = [desc[0] for desc in cursor.description]
             self.display_results(results, column_names, title="Borrower Late Fees")
@@ -649,7 +588,6 @@ class BorrowerLookupPage(ctk.CTkFrame):
                     `Late Fee ($)` DESC;
             """, (borrower_id, borrower_id, book_id, book_id, book_title, f"%{book_title}%"))
 
-            # Fetch results
             results = cursor.fetchall()
             column_names = [desc[0] for desc in cursor.description]
             self.display_results(results, column_names, title="Book Information")
@@ -665,38 +603,32 @@ class BorrowerLookupPage(ctk.CTkFrame):
         result_window.title(title)
         result_window.geometry("800x400")
 
-        # Create a frame for the Treeview and scrollbar
         frame = ctk.CTkFrame(result_window, fg_color="#bad7f5")
         frame.grid(row=0, column=0, sticky="nsew")
 
-        # Configure grid
         frame.grid_rowconfigure(0, weight=1)
         frame.grid_columnconfigure(0, weight=1)
-
-        # Create Treeview
         tree = ttk.Treeview(frame, columns=column_names, show='headings', height=15)
         tree.grid(row=0, column=0, sticky="nsew")
 
-        # Add scrollbar
         scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
         scrollbar.grid(row=0, column=1, sticky="ns")
         tree.configure(yscrollcommand=scrollbar.set)
 
-        # Set column headers
+
         for col in column_names:
             tree.heading(col, text=col)
             tree.column(col, width=150)
 
-        # Populate Treeview
+
         for row in results:
             tree.insert("", "end", values=row)
 
-        # Adjust result window size
         result_window.grid_rowconfigure(0, weight=1)
         result_window.grid_columnconfigure(0, weight=1)
 
 
-# Run the Application
+# Run 
 if __name__ == "__main__":
     app = LibraryApp()
     app.mainloop()
