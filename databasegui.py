@@ -32,7 +32,7 @@ class LibraryApp(ctk.CTk):
         self.frames = {}
 
         # Initialize all pages
-        for Page in (MainMenu, SearchPage, CheckoutPage, AddBorrowerPage, AddBookPage, LateNoticesPage):
+        for Page in (MainMenu, SearchPage, CheckoutPage, AddBorrowerPage, AddBookPage, LateNoticesPage, BorrowerLookupPage):
             page_name = Page.__name__
             frame = Page(parent=self.container, controller=self)
             self.frames[page_name] = frame
@@ -84,6 +84,9 @@ class MainMenu(ctk.CTkFrame):
                       command=lambda: controller.show_frame("AddBookPage"), font=button_font, width=200, height=50).pack(pady=10)
         ctk.CTkButton(button_frame, text="Late Notices", fg_color="#635555", hover_color="#2e2626",
               command=lambda: controller.show_frame("LateNoticesPage"), font=button_font, width=200, height=50).pack(pady=10)
+        ctk.CTkButton(button_frame, text="Borrower Lookup", fg_color="#635555", hover_color="#2e2626",
+              command=lambda: controller.show_frame("BorrowerLookupPage"), font=button_font, width=200, height=50).pack(pady=10)
+
 
         
 # Helper Functions for Styling
@@ -514,6 +517,152 @@ class LateNoticesPage(ctk.CTkFrame):
     def display_results(self, results, column_names):
         result_window = ctk.CTkToplevel(self)
         result_window.title("Late Notices")
+        result_window.geometry("800x400")
+
+        # Create a frame for the Treeview and scrollbar
+        frame = ctk.CTkFrame(result_window, fg_color="#bad7f5")
+        frame.grid(row=0, column=0, sticky="nsew")
+
+        # Configure grid
+        frame.grid_rowconfigure(0, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
+
+        # Create Treeview
+        tree = ttk.Treeview(frame, columns=column_names, show='headings', height=15)
+        tree.grid(row=0, column=0, sticky="nsew")
+
+        # Add scrollbar
+        scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
+        scrollbar.grid(row=0, column=1, sticky="ns")
+        tree.configure(yscrollcommand=scrollbar.set)
+
+        # Set column headers
+        for col in column_names:
+            tree.heading(col, text=col)
+            tree.column(col, width=150)
+
+        # Populate Treeview
+        for row in results:
+            tree.insert("", "end", values=row)
+
+        # Adjust result window size
+        result_window.grid_rowconfigure(0, weight=1)
+        result_window.grid_columnconfigure(0, weight=1)
+
+class BorrowerLookupPage(ctk.CTkFrame):
+    def __init__(self, parent, controller):
+        super().__init__(parent)
+        self.controller = controller
+        self.configure(fg_color="#bad7f5")
+
+        # Header
+        ctk.CTkLabel(self, text="Borrower Lookup", font=("Courier", 24, "bold")).pack(pady=20)
+        ctk.CTkLabel(self, text="Search Borrowers and Book Info", font=("Courier", 16)).pack(pady=10)
+
+        # Borrower Filters
+        ctk.CTkLabel(self, text="Borrower ID (optional)", font=("Courier", 14)).pack(pady=5)
+        self.borrower_id_entry = styled_entry(self)
+        self.borrower_id_entry.pack(pady=5)
+
+        ctk.CTkLabel(self, text="Borrower Name (optional)", font=("Courier", 14)).pack(pady=5)
+        self.borrower_name_entry = styled_entry(self)
+        self.borrower_name_entry.pack(pady=5)
+
+        # Book Filters
+        ctk.CTkLabel(self, text="Book ID (optional)", font=("Courier", 14)).pack(pady=5)
+        self.book_id_entry = styled_entry(self)
+        self.book_id_entry.pack(pady=5)
+
+        ctk.CTkLabel(self, text="Book Title (optional)", font=("Courier", 14)).pack(pady=5)
+        self.book_title_entry = styled_entry(self)
+        self.book_title_entry.pack(pady=5)
+
+        # Buttons
+        styled_button(self, "See Borrowers", self.search_borrowers).pack(pady=10)
+        styled_button(self, "See Books", self.search_books).pack(pady=10)
+        styled_button(self, "Back to Main Menu", lambda: controller.show_frame("MainMenu")).pack(pady=10)
+
+    def search_borrowers(self):
+        borrower_id = self.borrower_id_entry.get().strip()
+        borrower_name = self.borrower_name_entry.get().strip()
+
+        try:
+            conn = connect_to_db()
+            cursor = conn.cursor()
+
+            # SQL query for late fee balance
+            cursor.execute(f"""
+                SELECT 
+                    br.Card_No AS 'Borrower ID',
+                    br.Name AS 'Borrower Name',
+                    COALESCE(SUM(DATEDIFF(bl.Returned_date, bl.Due_Date) * 0.25), 0) AS 'Late Fee Balance ($)'
+                FROM 
+                    BORROWER br
+                LEFT JOIN 
+                    BOOK_LOANS bl ON br.Card_No = bl.Card_No
+                WHERE 
+                    (%s = '' OR br.Card_No = %s)
+                    AND (%s = '' OR br.Name LIKE %s)
+                GROUP BY 
+                    br.Card_No, br.Name
+                ORDER BY 
+                    `Late Fee Balance ($)` DESC;
+            """, (borrower_id, borrower_id, borrower_name, f"%{borrower_name}%"))
+
+            # Fetch results
+            results = cursor.fetchall()
+            column_names = [desc[0] for desc in cursor.description]
+            self.display_results(results, column_names, title="Borrower Late Fees")
+        except mysql.connector.Error as e:
+            messagebox.showerror("Database Error", f"An error occurred: {e}")
+        finally:
+            cursor.close()
+            conn.close()
+
+    def search_books(self):
+        """Handles search for books based on borrower ID and book filters."""
+        borrower_id = self.borrower_id_entry.get().strip()
+        book_id = self.book_id_entry.get().strip()
+        book_title = self.book_title_entry.get().strip()
+
+        try:
+            conn = connect_to_db()
+            cursor = conn.cursor()
+
+            # SQL query for book information
+            cursor.execute(f"""
+                SELECT 
+                    b.Book_Id AS 'Book ID',
+                    b.Title AS 'Book Title',
+                    bl.Branch_Id AS 'Branch ID',
+                    bl.Due_Date AS 'Due Date',
+                    DATEDIFF(CURDATE(), bl.Due_Date) * 0.25 AS 'Late Fee ($)'
+                FROM 
+                    BOOK b
+                JOIN 
+                    BOOK_LOANS bl ON b.Book_Id = bl.Book_Id
+                WHERE 
+                    (%s = '' OR bl.Card_No = %s)
+                    AND (%s = '' OR b.Book_Id = %s)
+                    AND (%s = '' OR b.Title LIKE %s)
+                ORDER BY 
+                    `Late Fee ($)` DESC;
+            """, (borrower_id, borrower_id, book_id, book_id, book_title, f"%{book_title}%"))
+
+            # Fetch results
+            results = cursor.fetchall()
+            column_names = [desc[0] for desc in cursor.description]
+            self.display_results(results, column_names, title="Book Information")
+        except mysql.connector.Error as e:
+            messagebox.showerror("Database Error", f"An error occurred: {e}")
+        finally:
+            cursor.close()
+            conn.close()
+
+    def display_results(self, results, column_names, title="Results"):
+        """Displays query results in a new window."""
+        result_window = ctk.CTkToplevel(self)
+        result_window.title(title)
         result_window.geometry("800x400")
 
         # Create a frame for the Treeview and scrollbar
